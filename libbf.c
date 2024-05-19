@@ -37,12 +37,10 @@
 
 /* enable it to check the multiplication result */
 //#define USE_MUL_CHECK
-#ifdef CONFIG_BIGNUM
 /* enable it to use FFT/NTT multiplication */
 #define USE_FFT_MUL
 /* enable decimal floating point support */
 #define USE_BF_DEC
-#endif
 
 //#define inline __attribute__((always_inline))
 
@@ -5499,6 +5497,7 @@ static inline limb_t fast_udiv(limb_t a, const FastDivData *s)
     return (t1 + t0) >> s->shift2;
 }
 
+#endif // USE_BF_DEC
 /* contains 10^i */
 const limb_t mp_pow_dec[LIMB_DIGITS + 1] = {
     1U,
@@ -5524,6 +5523,7 @@ const limb_t mp_pow_dec[LIMB_DIGITS + 1] = {
     10000000000000000000U,
 #endif
 };
+#ifdef USE_BF_DEC
 
 /* precomputed from fast_udiv_init(10^i) */
 static const FastDivData mp_pow_div[LIMB_DIGITS + 1] = {
