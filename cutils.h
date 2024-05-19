@@ -1,6 +1,6 @@
 /*
  * C utilities
- * 
+ *
  * Copyright (c) 2017 Fabrice Bellard
  * Copyright (c) 2018 Charlie Gordon
  *
@@ -28,14 +28,33 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#else
+#include <sys/types.h>
+#endif
+
 /* set if CPU is big endian */
 #undef WORDS_BIGENDIAN
 
+#ifdef __GNUC__
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
 #define force_inline inline __attribute__((always_inline))
 #define no_inline __attribute__((noinline))
-#define __maybe_unused __attribute__((unused))
+#define maybe_unused __attribute__((unused))
+#else
+#define likely(x) (x)
+#define unlikely(x) (x)
+#define force_inline
+#define no_inline
+#define maybe_unused
+#endif
+
+#ifdef _MSC_VER
+#define alloca _alloca
+#endif
 
 #define xglue(x, y) x ## y
 #define glue(x, y) xglue(x, y)
@@ -114,38 +133,54 @@ static inline int64_t min_int64(int64_t a, int64_t b)
 /* WARNING: undefined if a = 0 */
 static inline int clz32(unsigned int a)
 {
+#ifdef _MSC_VER
+    return (int) __lzcnt(a);
+#else
     return __builtin_clz(a);
+#endif
 }
 
 /* WARNING: undefined if a = 0 */
 static inline int clz64(uint64_t a)
 {
+#ifdef _MSC_VER
+    return (int) __lzcnt64(a);
+#else
     return __builtin_clzll(a);
+#endif
 }
 
 /* WARNING: undefined if a = 0 */
 static inline int ctz32(unsigned int a)
 {
+#ifdef _MSC_VER
+    return (int) _tzcnt_u32(a);
+#else
     return __builtin_ctz(a);
+#endif
 }
 
 /* WARNING: undefined if a = 0 */
 static inline int ctz64(uint64_t a)
 {
+#ifdef _MSC_VER
+    return (int) _tzcnt_u64(a);
+#else
     return __builtin_ctzll(a);
+#endif
 }
 
-struct __attribute__((packed)) packed_u64 {
+#pragma pack(push, 1)
+struct packed_u64 {
     uint64_t v;
 };
-
-struct __attribute__((packed)) packed_u32 {
+struct packed_u32 {
     uint32_t v;
 };
-
-struct __attribute__((packed)) packed_u16 {
+struct packed_u16 {
     uint16_t v;
 };
+#pragma pack(pop)
 
 static inline uint64_t get_u64(const uint8_t *tab)
 {
@@ -262,8 +297,15 @@ static inline int dbuf_put_u64(DynBuf *s, uint64_t val)
 {
     return dbuf_put(s, (uint8_t *)&val, 8);
 }
-int __attribute__((format(printf, 2, 3))) dbuf_printf(DynBuf *s,
-                                                      const char *fmt, ...);
+
+#ifdef __GNUC__
+#define FORMAT_ATTR(x, y) __attribute__((format(printf, x, y)))
+#else
+#define FORMAT_ATTR(x, y)
+#endif
+
+int FORMAT_ATTR(2, 3) dbuf_printf(DynBuf *s, const char *fmt, ...);
+
 void dbuf_free(DynBuf *s);
 static inline BOOL dbuf_error(DynBuf *s) {
     return s->error;

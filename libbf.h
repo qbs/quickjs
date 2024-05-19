@@ -27,7 +27,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if INTPTR_MAX >= INT64_MAX
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if INTPTR_MAX >= INT64_MAX && !defined(_MSC_VER)
 #define LIMB_LOG2_BITS 6
 #else
 #define LIMB_LOG2_BITS 5
@@ -531,5 +535,9 @@ static inline int bfdec_resize(bfdec_t *r, limb_t len)
     return bf_resize((bf_t *)r, len);
 }
 int bfdec_normalize_and_round(bfdec_t *r, limb_t prec1, bf_flags_t flags);
+
+#ifdef __cplusplus
+} /* extern "C" { */
+#endif
 
 #endif /* LIBBF_H */

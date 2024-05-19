@@ -166,14 +166,14 @@ static inline slimb_t sat_add(slimb_t a, slimb_t b)
     return r;
 }
 
-static inline __maybe_unused limb_t shrd(limb_t low, limb_t high, long shift)
+static inline maybe_unused limb_t shrd(limb_t low, limb_t high, long shift)
 {
     if (shift != 0)
         low = (low >> shift) | (high << (LIMB_BITS - shift));
     return low;
 }
 
-static inline __maybe_unused limb_t shld(limb_t a1, limb_t a0, long shift)
+static inline maybe_unused limb_t shld(limb_t a1, limb_t a0, long shift)
 {
     if (shift != 0)
         return (a1 << shift) | (a0 >> (LIMB_BITS - shift));
@@ -689,7 +689,7 @@ int bf_round(bf_t *r, limb_t prec, bf_flags_t flags)
 }
 
 /* for debugging */
-static __maybe_unused void dump_limbs(const char *str, const limb_t *tab, limb_t n)
+static maybe_unused void dump_limbs(const char *str, const limb_t *tab, limb_t n)
 {
     limb_t i;
     printf("%s: len=%" PRId_LIMB "\n", str, n);
@@ -711,7 +711,7 @@ void mp_print_str(const char *str, const limb_t *tab, limb_t n)
     printf("\n");
 }
 
-static __maybe_unused void mp_print_str_h(const char *str,
+static maybe_unused void mp_print_str_h(const char *str,
                                           const limb_t *tab, limb_t n,
                                           limb_t high)
 {
@@ -1876,7 +1876,7 @@ int bf_remquo(slimb_t *pq, bf_t *r, const bf_t *a, const bf_t *b, limb_t prec,
     return ret;
 }
 
-static __maybe_unused inline limb_t mul_mod(limb_t a, limb_t b, limb_t m)
+static maybe_unused inline limb_t mul_mod(limb_t a, limb_t b, limb_t m)
 {
     dlimb_t t;
     t = (dlimb_t)a * (dlimb_t)b;
@@ -5468,7 +5468,7 @@ typedef struct FastDivData {
 /* From "Division by Invariant Integers using Multiplication" by
    Torborn Granlund and Peter L. Montgomery */
 /* d must be != 0 */
-static inline __maybe_unused void fast_udiv_init(FastDivData *s, limb_t d)
+static inline maybe_unused void fast_udiv_init(FastDivData *s, limb_t d)
 {
     int l;
     limb_t q, r, m1;
@@ -5497,6 +5497,7 @@ static inline limb_t fast_udiv(limb_t a, const FastDivData *s)
     return (t1 + t0) >> s->shift2;
 }
 
+#endif // USE_BF_DEC
 /* contains 10^i */
 const limb_t mp_pow_dec[LIMB_DIGITS + 1] = {
     1U,
@@ -5522,6 +5523,7 @@ const limb_t mp_pow_dec[LIMB_DIGITS + 1] = {
     10000000000000000000U,
 #endif
 };
+#ifdef USE_BF_DEC
 
 /* precomputed from fast_udiv_init(10^i) */
 static const FastDivData mp_pow_div[LIMB_DIGITS + 1] = {
@@ -5791,7 +5793,7 @@ limb_t mp_div1_dec(limb_t *tabr, const limb_t *taba, mp_size_t na,
     return r;
 }
 
-static __maybe_unused void mp_print_str_dec(const char *str,
+static maybe_unused void mp_print_str_dec(const char *str,
                                        const limb_t *tab, slimb_t n)
 {
     slimb_t i;
@@ -5804,7 +5806,7 @@ static __maybe_unused void mp_print_str_dec(const char *str,
     printf("\n");
 }
 
-static __maybe_unused void mp_print_str_h_dec(const char *str,
+static maybe_unused void mp_print_str_h_dec(const char *str,
                                               const limb_t *tab, slimb_t n,
                                               limb_t high)
 {
