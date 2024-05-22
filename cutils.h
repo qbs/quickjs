@@ -1,6 +1,6 @@
 /*
  * C utilities
- * 
+ *
  * Copyright (c) 2017 Fabrice Bellard
  * Copyright (c) 2018 Charlie Gordon
  *
@@ -28,14 +28,33 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#else
+#include <sys/types.h>
+#endif
+
 /* set if CPU is big endian */
 #undef WORDS_BIGENDIAN
 
+#ifdef __GNUC__
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
 #define force_inline inline __attribute__((always_inline))
 #define no_inline __attribute__((noinline))
-#define __maybe_unused __attribute__((unused))
+#define maybe_unused __attribute__((unused))
+#else
+#define likely(x) (x)
+#define unlikely(x) (x)
+#define force_inline
+#define no_inline
+#define maybe_unused
+#endif
+
+#ifdef _MSC_VER
+#define alloca _alloca
+#endif
 
 #define xglue(x, y) x ## y
 #define glue(x, y) xglue(x, y)
@@ -114,38 +133,24 @@ static inline int64_t min_int64(int64_t a, int64_t b)
 /* WARNING: undefined if a = 0 */
 static inline int clz32(unsigned int a)
 {
+#ifdef _MSC_VER
+    return (int) __lzcnt(a);
+#else
     return __builtin_clz(a);
+#endif
 }
 
-/* WARNING: undefined if a = 0 */
-static inline int clz64(uint64_t a)
-{
-    return __builtin_clzll(a);
-}
-
-/* WARNING: undefined if a = 0 */
-static inline int ctz32(unsigned int a)
-{
-    return __builtin_ctz(a);
-}
-
-/* WARNING: undefined if a = 0 */
-static inline int ctz64(uint64_t a)
-{
-    return __builtin_ctzll(a);
-}
-
-struct __attribute__((packed)) packed_u64 {
+#pragma pack(push, 1)
+struct packed_u64 {
     uint64_t v;
 };
-
-struct __attribute__((packed)) packed_u32 {
+struct packed_u32 {
     uint32_t v;
 };
-
-struct __attribute__((packed)) packed_u16 {
+struct packed_u16 {
     uint16_t v;
 };
+#pragma pack(pop)
 
 static inline uint64_t get_u64(const uint8_t *tab)
 {
@@ -220,13 +225,13 @@ static inline uint32_t bswap32(uint32_t v)
 
 static inline uint64_t bswap64(uint64_t v)
 {
-    return ((v & ((uint64_t)0xff << (7 * 8))) >> (7 * 8)) | 
-        ((v & ((uint64_t)0xff << (6 * 8))) >> (5 * 8)) | 
-        ((v & ((uint64_t)0xff << (5 * 8))) >> (3 * 8)) | 
-        ((v & ((uint64_t)0xff << (4 * 8))) >> (1 * 8)) | 
-        ((v & ((uint64_t)0xff << (3 * 8))) << (1 * 8)) | 
-        ((v & ((uint64_t)0xff << (2 * 8))) << (3 * 8)) | 
-        ((v & ((uint64_t)0xff << (1 * 8))) << (5 * 8)) | 
+    return ((v & ((uint64_t)0xff << (7 * 8))) >> (7 * 8)) |
+        ((v & ((uint64_t)0xff << (6 * 8))) >> (5 * 8)) |
+        ((v & ((uint64_t)0xff << (5 * 8))) >> (3 * 8)) |
+        ((v & ((uint64_t)0xff << (4 * 8))) >> (1 * 8)) |
+        ((v & ((uint64_t)0xff << (3 * 8))) << (1 * 8)) |
+        ((v & ((uint64_t)0xff << (2 * 8))) << (3 * 8)) |
+        ((v & ((uint64_t)0xff << (1 * 8))) << (5 * 8)) |
         ((v & ((uint64_t)0xff << (0 * 8))) << (7 * 8));
 }
 
@@ -262,8 +267,15 @@ static inline int dbuf_put_u64(DynBuf *s, uint64_t val)
 {
     return dbuf_put(s, (uint8_t *)&val, 8);
 }
-int __attribute__((format(printf, 2, 3))) dbuf_printf(DynBuf *s,
-                                                      const char *fmt, ...);
+
+#ifdef __GNUC__
+#define FORMAT_ATTR(x, y) __attribute__((format(printf, x, y)))
+#else
+#define FORMAT_ATTR(x, y)
+#endif
+
+int FORMAT_ATTR(2, 3) dbuf_printf(DynBuf *s, const char *fmt, ...);
+
 void dbuf_free(DynBuf *s);
 static inline BOOL dbuf_error(DynBuf *s) {
     return s->error;
